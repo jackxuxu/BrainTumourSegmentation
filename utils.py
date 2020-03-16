@@ -93,3 +93,103 @@ def channel_standardization(image):
     cast = np.nan_to_num(output)
 
     return cast
+
+
+def create_data(in_path, out_path, verbose=True, min_max_norm=False, swapaxes=False):
+    '''
+    Function to read medical image from BRATS2015 and convert them into .npy
+    :param in_path: input path where BRATS2015 is stored
+    :param out_path: path where preprocessed data is subjected to stored
+    :param verbose: output data tree example while processing the files
+    :param min_max_norm: toggle for min max normalization
+    :param swapaxes: swapaxes after stacking up pre-processed images, (slices, img_size, img_size) => (img_size, img_size, slices)
+    :return: None (check output folder)
+    '''
+    total_patients = []
+    # directory for training and testing
+    for d_00 in sorted(os.listdir(in_path)):
+        # ignore zip files
+        if not d_00.endswith('.zip'):
+            print(d_00)
+            merge_d00 = os.path.join(in_path + d_00)
+        # skip the loop for .zip extension
+        else:
+            continue
+        # create file directory [Training, Testing]
+        save_path_01 = (out_path + d_00 + '/')
+        if not os.path.exists(save_path_01):
+            os.makedirs(save_path_01)
+
+        # training or testing > hgg or lgg
+        for d_01 in sorted(os.listdir(merge_d00)):
+            print(' ->', d_01)
+            merge_d01 = os.path.join(merge_d00 + '/' + d_01)
+            patient_counts = 0
+            # create file directory [HGG, LGG]
+            save_path_02 = (save_path_01 + d_01 + '/')
+            if not os.path.exists(save_path_02):
+                os.makedirs(save_path_02)
+
+            for steps_01, d_02 in enumerate(sorted(os.listdir(merge_d01))):
+                break_01 = 0
+                # debug
+                # list only the first dir
+                if steps_01 == 0:
+                    break_01 = 1
+                    print('  -->', d_02)  # patient name
+                #
+                patient_counts += 1
+                merge_d02 = os.path.join(merge_d01 + '/' + d_02)
+
+                multimodal_name_list = []
+                for steps_02, d_03 in enumerate(sorted(os.listdir(merge_d02))):
+                    # create file
+                    multimodal_file_name = d_03.split('.')[-2]  # MR_Flair, T2,..
+                    multimodal_name_list.append(multimodal_file_name)
+                    save_path_03 = (save_path_02 + multimodal_file_name + '/')
+                    if not os.path.exists(save_path_03):
+                        os.makedirs(save_path_03)
+                    # debug
+                    # list only the first dir
+                    if break_01 == 1 and steps_02 != 5:
+                        print('   --->', d_03)  # multimodal
+                    #
+                    merge_d03 = os.path.join(merge_d02 + '/' + d_03)
+                    # read files with wild card .mha ending
+                    med_img = glob.glob('{}/*.mha'.format(merge_d03))  # return list!
+                    save_path_04 = (save_path_02 + multimodal_file_name + '/')
+                    for mha in med_img:
+                        read_med_img, _ = medpy.io.load(mha)
+
+                    # min max normalization switch, label 'OT' not included
+                    if multimodal_file_name != 'OT' and min_max_norm == True:
+                        norm_list = []
+                        for i in range(read_med_img.shape[-1]):  # last channel is the slices
+                            max_val = np.max(read_med_img[:, :, i])
+                            min_val = np.min(read_med_img[:, :, i])
+                            norm = (read_med_img[:, :, i] - min_val) / (max_val - min_val)
+                            norm_list.append(norm)
+
+                        read_med_img = np.array(norm_list)  # shape(155,240,240)
+                        read_med_img = np.nan_to_num(read_med_img)  # at times, max = 0, min = 0
+                        if swapaxes == True:  # =>(240, 240, 155)
+                            read_med_img = np.swapaxes(read_med_img, 0, 1)
+                            read_med_img = np.swapaxes(read_med_img, 1, 2)
+                    # file name => e.g. MR_Flair_brats_2013_pat0103_1.npy (multimodal + patient name)
+                    np.save(save_path_04 + '{}_{}.npy'.format(multimodal_file_name, d_02), read_med_img)
+                    #                 plt.imshow(read_med_img[:,:,20], cmap = 'gray')
+            #                 plt.show()
+            if verbose == True:
+                print('*Number of patients: {}'.format(patient_counts))
+                total_patients.append(patient_counts)
+                print()
+
+    if verbose == True:
+        print()
+        n_slices = 155
+        t_patients = np.sum(total_patients)
+        print('[Summary]')
+        print('Total number of patients: {}'.format(t_patients))
+        print('Total number of 2D images: {}'.format(t_patients * n_slices))
+        print('  |_ Training: {}'.format((t_patients - total_patients[0]) * n_slices))
+        print('  |_ Testing: {}'.format(total_patients[0] * n_slices))
