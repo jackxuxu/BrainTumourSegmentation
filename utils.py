@@ -193,3 +193,37 @@ def create_data(in_path, out_path, verbose=True, min_max_norm=False, swapaxes=Fa
         print('Total number of 2D images: {}'.format(t_patients * n_slices))
         print('  |_ Training: {}'.format((t_patients - total_patients[0]) * n_slices))
         print('  |_ Testing: {}'.format(total_patients[0] * n_slices))
+
+def split_labels(inp_path, out_path):
+    '''
+    Function to split labels into 3 tumor segmentations => core, enhancing tumor, complete tumor
+
+    :param inp_path: input path where the original labels in .npy is stored
+    :param out_path: output path where the split labels should be stored
+    :return: None (check output folder)
+    '''
+    for lbls in sorted(os.listdir(inp_path)):
+        patient_tag = lbls.split('.')[0]
+        npy_path = os.path.join(inp_path+'/'+lbls)
+        labels = np.load(npy_path)
+        #labels path
+        core_path = out_path+'core/'
+        enhancing_tumor_path = out_path+'enhancing_tumor/'
+        complete_tumor_path = out_path+'complete_tumor/'
+
+        #core
+        if not os.path.exists(core_path):
+            os.makedirs(core_path)
+        core = np.where((labels==1) | (labels==3), labels, 0)
+        np.save(core_path+'core_{}.npy'.format(patient_tag), core)
+        #enhancing tumor
+        if not os.path.exists(enhancing_tumor_path):
+            os.makedirs(enhancing_tumor_path)
+        enhancing_tumor = np.where(img==4, img, 0)
+        np.save(enhancing_tumor_path+'enhancing_tumor_{}.npy'.format(patient_tag), enhancing_tumor)
+
+        #complete tumor
+        if not os.path.exists(complete_tumor_path):
+            os.makedirs(complete_tumor_path)
+        complete_tumor = np.where(img<=1, img, 1 )
+        np.save(complete_tumor_path+'complete_tumor_{}.npy'.format(patient_tag), complete_tumor)
