@@ -220,17 +220,17 @@ def split_labels(inp_path, out_path):
         #enhancing tumor
         if not os.path.exists(enhancing_tumor_path):
             os.makedirs(enhancing_tumor_path)
-        enhancing_tumor = np.where(img==4, img, 0)
+        enhancing_tumor = np.where(labels==4, labels, 0)
         np.save(enhancing_tumor_path+'enhancing_tumor_{}.npy'.format(patient_tag), enhancing_tumor)
 
         #complete tumor
         if not os.path.exists(complete_tumor_path):
             os.makedirs(complete_tumor_path)
-        complete_tumor = np.where(img<=1, img, 1 )
+        complete_tumor = np.where(labels<=1, labels, 1 )
         np.save(complete_tumor_path+'complete_tumor_{}.npy'.format(patient_tag), complete_tumor)
 
 
-def threeD_to_twoD(save_dir):
+def threeD_to_twoD(save_dir, ds_list, ds_list_str):
     '''
     Stack all the images according to slices of a patient to create a 2D image stacks
 
