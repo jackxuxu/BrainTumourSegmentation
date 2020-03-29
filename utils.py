@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import os
 import glob
@@ -227,3 +228,106 @@ def split_labels(inp_path, out_path):
             os.makedirs(complete_tumor_path)
         complete_tumor = np.where(img<=1, img, 1 )
         np.save(complete_tumor_path+'complete_tumor_{}.npy'.format(patient_tag), complete_tumor)
+
+
+def threeD_to_twoD(save_dir):
+    '''
+    Stack all the images according to slices of a patient to create a 2D image stacks
+
+    @param save_dir: The directory where the images need to be save
+    '''
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    for ds, file_name in zip(ds_list, ds_list_str):
+        for data in sorted(os.listdir(ds)):
+            if data == 'OT':
+                continue  # skip the label directory
+            merge_path_01 = os.path.join(ds + data + '/')
+            img_stack = []
+            for imgs in sorted(os.listdir(merge_path_01)):
+                merge_path_02 = os.path.join(merge_path_01 + '/' + imgs)
+                med_img = np.load(merge_path_02).astype(np.float32)
+                for i in range(med_img.shape[-1]):  # last dimension is the number of slices
+                    img_stack.append(med_img[:, :, i])
+            img_stack = np.array(img_stack)
+            np.save(save_dir + '{}_{}'.format(file_name, data), img_stack)
+
+
+def concat_recursive(a, b, max_count, count=0):
+    '''
+    Recursively concatenate the image stacks with the next image stacks
+
+    @param a: Top first image stacks
+    @param b: Following image stacks
+    '''
+    while count < max_count - 1:
+        c = np.concatenate((a, b), axis=0)
+        a = c
+        count += 1
+        concat_recursive(a, b, max_count, count)
+    return a
+
+
+def _bytes_feature(value):
+    """Returns a bytes_list from a string / byte."""
+    # If the value is an eager tensor BytesList won't unpack a string from an EagerTensor.
+    if isinstance(value, type(tf.constant(0))):
+        value = value.numpy()
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
+def _float_feature(value):
+    """Returns a float_list from a float / double."""
+    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+
+
+def _int64_feature(value):
+    """Returns an int64_list from a bool / enum / int / uint."""
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+
+def serialize_example(image, label):
+    '''
+    Adding image and label info to TFRecords dataset
+    '''
+    feature = {
+        'image': _bytes_feature(image),
+        'label': _bytes_feature(label),
+    }
+    example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
+    return example_proto.SerializeToString()
+
+
+def write_tfrecords(tfrecord_dir, image_paths, labels_path):
+    '''
+    write TFRecords to appointed directory
+    '''
+    with tf.io.TFRecordWriter(tfrecord_dir) as writer:
+        for image, label in zip(image_paths, labels_path):
+            img_bytes = tf.io.serialize_tensor(image)
+            labels = tf.io.serialize_tensor(label)
+            example = serialize_example(img_bytes, labels)
+            writer.write(example)
+
+
+def read_tfrecord(serialized_example):
+    '''
+    read TFRecords from appointed directory
+    '''
+    feature_description = {
+        'image': tf.io.FixedLenFeature((), tf.string),
+        'label': tf.io.FixedLenFeature((), tf.string),
+    }
+    example = tf.io.parse_single_example(serialized_example, feature_description)
+
+    image = tf.io.parse_tensor(example['image'], out_type=float)
+    label = tf.io.parse_tensor(example['label'], out_type=float)
+
+    return image, label
+
+
+def parse_tfrecord(tf_dir):
+    tfrecord_dataset = tf.data.TFRecordDataset(tf_dir)
+    parsed_dataset = tfrecord_dataset.map(read_tfrecord)
+    return parsed_dataset
