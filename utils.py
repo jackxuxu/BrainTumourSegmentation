@@ -287,27 +287,25 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def serialize_example(image, label):
+def serialize_example(image):
     '''
     Adding image and label info to TFRecords dataset
     '''
     feature = {
-        'image': _bytes_feature(image),
-        'label': _bytes_feature(label),
+        'image': _bytes_feature(image)
     }
     example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
     return example_proto.SerializeToString()
 
 
-def write_tfrecords(tfrecord_dir, image_paths, labels_path):
+def write_tfrecords(tfrecord_dir, image_paths):
     '''
     write TFRecords to appointed directory
     '''
     with tf.io.TFRecordWriter(tfrecord_dir) as writer:
-        for image, label in zip(image_paths, labels_path):
+        for image in image_paths:
             img_bytes = tf.io.serialize_tensor(image)
-            labels = tf.io.serialize_tensor(label)
-            example = serialize_example(img_bytes, labels)
+            example = serialize_example(img_bytes)
             writer.write(example)
 
 
@@ -316,15 +314,11 @@ def read_tfrecord(serialized_example):
     read TFRecords from appointed directory
     '''
     feature_description = {
-        'image': tf.io.FixedLenFeature((), tf.string),
-        'label': tf.io.FixedLenFeature((), tf.string),
+        'image': tf.io.FixedLenFeature((), tf.string)
     }
     example = tf.io.parse_single_example(serialized_example, feature_description)
-
     image = tf.io.parse_tensor(example['image'], out_type=float)
-    label = tf.io.parse_tensor(example['label'], out_type=float)
-
-    return image, label
+    return image
 
 
 def parse_tfrecord(tf_dir):
