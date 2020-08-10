@@ -15,8 +15,8 @@ Prediction in the BRATS Challenge: https://arxiv.org/pdf/1811.02629.pdf
 * Attention Gated Networks: Learning to Leverage Salient Regions in Medical Images:https://arxiv.org/pdf/1808.08114.pdf 
 * Attention-Guided Version of 2D UNet for Automatic Brain Tumor Segmentation: https://arxiv.org/pdf/2004.02009.pdf 
 
-#Attention Mechanism 
+# Attention Mechanism 
 * Multi-scale self-guided attention for medical image segmentation: https://arxiv.org/pdf/1906.02849.pdf 
 
-#Others
+# Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
