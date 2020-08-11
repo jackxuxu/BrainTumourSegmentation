@@ -103,8 +103,11 @@ def show_lable_on_image4(test_img, label_im):
     yellow_multiplier = [1, 1, 0.25]
     brown_miltiplier = [40. / 255, 26. / 255, 13. / 255]
 
+    #label 1 => necrotic and non-enhancing tumor core
     color_mask[label_im == 1] = blue_multiplier  # [1, 0, 0]  # Red block
+    #label 2 => peritumoral edema
     color_mask[label_im == 2] = yellow_multiplier  # [0, 1, 0] # Green block
+    #label 3/4 => GD-enhancing tumor
     color_mask[label_im == 3] = brown_miltiplier  # [0, 0, 1] # Blue block
     color_mask[label_im == 4] = green_multiplier  # [0, 1, 1] # Blue block
 
