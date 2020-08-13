@@ -141,7 +141,7 @@ def plot_labels_color(label_im):
 
     color_mask[label_im == 1] = blue_multiplier  # [1, 0, 0]  # Red block
     color_mask[label_im == 2] = yellow_multiplier  # [0, 1, 0] # Green block
-    color_mask[label_im == 3] = brown_multiplier  # [0, 0, 1] # Blue block
+    color_mask[label_im == 3] = green_multiplier  # [0, 0, 1] # Blue block
     color_mask[label_im == 4] = green_multiplier  # [0, 1, 1] # Blue block
 
     return color_mask
