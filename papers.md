@@ -20,3 +20,7 @@ Prediction in the BRATS Challenge: https://arxiv.org/pdf/1811.02629.pdf
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
+
+# Loss Functions
+* Metrics to Evaluate your Semantic Segmentation Model: https://towardsdatascience.com/metrics-to-evaluate-your-semantic-segmentation-model-6bcb99639aa2
+* https://github.com/JunMa11/SegLoss
