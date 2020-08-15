@@ -177,8 +177,12 @@ def dice_coef(y_true, y_pred, smooth=1e-5):
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
     intersection = tf.reduce_sum(y_true * y_pred)
-    return (2.0 * intersection + smooth) / \
-(tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) + smooth)
+    # if intersection==0:
+    #     return 0.0
+    # else:
+    dc = (2.0 * intersection + smooth) / \
+        (tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) + smooth)
+    return dc.numpy()
 
 def dice_coef_loss(y_true, y_pred):
     '''
@@ -310,7 +314,7 @@ def compute_metric(y_true, y_pred, label_type='binary'):
         spec_list = []
         # only single images [240, 240]
         if y_true.ndim == 2:
-            dc = dice_coef(y_true, y_pred).numpy()
+            dc = dice_coef(y_true, y_pred)
             sensitivity, specificity = ss_metric(y_true, y_pred)
             # append for each tumour type
             dc_output.append(dc)

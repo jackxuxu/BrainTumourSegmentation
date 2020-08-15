@@ -20,6 +20,8 @@ Prediction in the BRATS Challenge: https://arxiv.org/pdf/1811.02629.pdf
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
+* 3D Deeply Supervised Network for Automatic
+Liver Segmentation from CT Volumes: https://arxiv.org/pdf/1607.00582.pdf
 
 # Loss Functions
 * Metrics to Evaluate your Semantic Segmentation Model: https://towardsdatascience.com/metrics-to-evaluate-your-semantic-segmentation-model-6bcb99639aa2
