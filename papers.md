@@ -17,11 +17,16 @@ Prediction in the BRATS Challenge: https://arxiv.org/pdf/1811.02629.pdf
 
 # Attention Mechanism 
 * Multi-scale self-guided attention for medical image segmentation: https://arxiv.org/pdf/1906.02849.pdf 
+* Inf-Net: Automatic COVID-19 Lung Infection
+Segmentation from CT Images: https://arxiv.org/pdf/2004.14133.pdf
+* Exploration of Different Attention Mechanisms on Medical Image Segmentation: https://link.springer.com/chapter/10.1007/978-3-030-36808-1_65
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
 * 3D Deeply Supervised Network for Automatic
 Liver Segmentation from CT Volumes: https://arxiv.org/pdf/1607.00582.pdf
+* Image Segmentation Using Deep Learning:
+A Survey: https://arxiv.org/pdf/2001.05566.pdf
 
 # Loss Functions
 * Metrics to Evaluate your Semantic Segmentation Model: https://towardsdatascience.com/metrics-to-evaluate-your-semantic-segmentation-model-6bcb99639aa2
