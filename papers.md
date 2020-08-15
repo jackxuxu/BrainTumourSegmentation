@@ -16,10 +16,14 @@ Prediction in the BRATS Challenge: https://arxiv.org/pdf/1811.02629.pdf
 * Attention-Guided Version of 2D UNet for Automatic Brain Tumor Segmentation: https://arxiv.org/pdf/2004.02009.pdf 
 
 # Attention Mechanism 
+* Attention and Augmented Recurrent Neural Networks: https://distill.pub/2016/augmented-rnns/
 * Multi-scale self-guided attention for medical image segmentation: https://arxiv.org/pdf/1906.02849.pdf 
 * Inf-Net: Automatic COVID-19 Lung Infection
 Segmentation from CT Images: https://arxiv.org/pdf/2004.14133.pdf
 * Exploration of Different Attention Mechanisms on Medical Image Segmentation: https://link.springer.com/chapter/10.1007/978-3-030-36808-1_65
+* Dual Attention Network for Scene Segmentation: https://arxiv.org/pdf/1809.02983.pdf
+* Learning to Pay Attention to Mistakes: https://arxiv.org/pdf/2007.15131.pdf
+* SCAU-Net: Spatial-Channel Attention U-Net for Gland Segmentation: https://www.frontiersin.org/articles/10.3389/fbioe.2020.00670/full
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
@@ -30,4 +34,4 @@ A Survey: https://arxiv.org/pdf/2001.05566.pdf
 
 # Loss Functions
 * Metrics to Evaluate your Semantic Segmentation Model: https://towardsdatascience.com/metrics-to-evaluate-your-semantic-segmentation-model-6bcb99639aa2
-* https://github.com/JunMa11/SegLoss
+* Various Loss Functions Paper on GitHub: https://github.com/JunMa11/SegLoss
