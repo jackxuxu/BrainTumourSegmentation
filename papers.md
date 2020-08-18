@@ -24,6 +24,7 @@ Segmentation from CT Images: https://arxiv.org/pdf/2004.14133.pdf
 * Dual Attention Network for Scene Segmentation: https://arxiv.org/pdf/1809.02983.pdf
 * Learning to Pay Attention to Mistakes: https://arxiv.org/pdf/2007.15131.pdf
 * SCAU-Net: Spatial-Channel Attention U-Net for Gland Segmentation: https://www.frontiersin.org/articles/10.3389/fbioe.2020.00670/full
+* Learn to pay attention: https://arxiv.org/pdf/1804.02391.pdf
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
