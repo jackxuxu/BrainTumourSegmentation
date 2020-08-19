@@ -212,7 +212,7 @@ def dice_coef_bool(y_true, y_pred):
     summation = size_i1 + size_i2
 
     if summation != 0:
-        dc = 2.0 * tf.cast(intersection, tf.float32) / tf.cast(summation, tf.float32)
+        dc = (2.0 * tf.cast(intersection, tf.float32) / tf.cast(summation, tf.float32)).numpy()
     else:
         dc = 1.0
 
@@ -314,7 +314,7 @@ def compute_metric(y_true, y_pred, label_type='binary'):
         spec_list = []
         # only single images [240, 240]
         if y_true.ndim == 2:
-            dc = dice_coef(y_true, y_pred)
+            dc = dice_coef_bool(y_true, y_pred)
             sensitivity, specificity = ss_metric(y_true, y_pred)
             # append for each tumour type
             dc_output.append(dc)
@@ -326,7 +326,7 @@ def compute_metric(y_true, y_pred, label_type='binary'):
                 y_true_f = tf.reshape(y_true[idx], [-1])  # flatten
                 y_pred_f = tf.reshape(y_pred[idx], [-1])  # flatten
 
-                dc = dice_coef(y_true_f, y_pred_f)
+                dc = dice_coef_bool(y_true_f, y_pred_f)
                 sensitivity, specificity = ss_metric(y_true_f, y_pred_f)
                 # store values
                 dc_list.append(dc)
