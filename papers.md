@@ -25,6 +25,9 @@ Segmentation from CT Images: https://arxiv.org/pdf/2004.14133.pdf
 * Learning to Pay Attention to Mistakes: https://arxiv.org/pdf/2007.15131.pdf
 * SCAU-Net: Spatial-Channel Attention U-Net for Gland Segmentation: https://www.frontiersin.org/articles/10.3389/fbioe.2020.00670/full
 * Learn to pay attention: https://arxiv.org/pdf/1804.02391.pdf
+* A Novel Global Spatial Attention Mechanism in Convolutional
+Neural Network for Medical Image Classification: https://arxiv.org/pdf/2007.15897.pdf
+* Multi-Head Attention: Collaborate Instead of Concatenate: https://arxiv.org/pdf/2006.16362.pdf
 
 # Others
 * CNN-based Segmentation of Medical Imaging Data: https://arxiv.org/pdf/1701.03056.pdf
