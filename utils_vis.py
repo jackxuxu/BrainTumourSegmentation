@@ -8,15 +8,20 @@ from skimage import io, color, img_as_float
 from skimage.exposure import adjust_gamma
 import utils
 
-def plot_comparison(input_img, caption, n_row=1, n_col=2, figsize=(5, 5), cmap='gray'):
+def plot_comparison(input_img, caption, save_path=None, save_name=None, save_as='png',
+                    save_dpi=300, captions_font = 20, n_row=1, n_col=2,
+                    figsize=(5, 5), cmap='gray'):
     '''
     Plot comparison of multiple image but only in column wise!
     :param input_img: Input image list
     :param caption: Input caption list
+    :param save_path: Path to save plot
+    :param save_name: Name to be save for plot
+    :param: save_as: plot save extension, 'png' by DEFAULT
     :param IMG_SIZE: Image size
     :param n_row: Number of row is 1 by DEFAULT
     :param n_col: Number of columns
-    :param figsize: Figure size during plotting
+    :param figsize: Figure size during plotting (5,5) by DEFAULT
     :return: Plot of (n_row, n_col)
     '''
     print()
@@ -28,11 +33,13 @@ def plot_comparison(input_img, caption, n_row=1, n_col=2, figsize=(5, 5), cmap='
 
     for i in range(n_col):
         axes[i].imshow(np.squeeze(input_img[i]), cmap=cmap)
-        axes[i].set_xlabel(caption[i])
+        axes[i].set_xlabel(caption[i], fontsize=captions_font)
         axes[i].set_xticks([])
         axes[i].set_yticks([])
 
     plt.tight_layout()
+    if save_path!=None:
+        plt.savefig(save_path+'{}.{}'.format(save_name, save_as), save_dpi=save_dpi)
     plt.show()
 
 
