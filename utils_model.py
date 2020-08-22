@@ -3,8 +3,6 @@ from tensorflow.keras.layers import Conv2D, Dense, Flatten, Reshape, MaxPooling2
 from tensorflow.keras.layers import InputLayer, Conv2DTranspose, Activation, BatchNormalization, Input
 from tensorflow.keras.layers import Add, Multiply
 from coord_conv import CoordConv
-from tensorflow.keras import Model
-
 
 def conv_block(x_in, filters, batch_norm=False, kernel_size=(3, 3),
                kernel_initializer='glorot_uniform', acti='relu', dropout_rate=None):
