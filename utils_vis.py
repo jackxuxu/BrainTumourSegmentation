@@ -152,3 +152,21 @@ def plot_labels_color(label_im):
     color_mask[label_im == 4] = green_multiplier  # [0, 1, 1] # Blue block
 
     return color_mask
+
+
+def plot_labels_color255(label_im):
+    rows, cols = label_im.shape
+    # Construct a colour image to superimpose
+    color_mask = np.zeros((rows, cols, 3))
+    red_multiplier = [255, 51, 51]
+    green_multiplier = [89, 191, 64]
+    blue_multiplier = [0, 64, 230]
+    yellow_multiplier = [255, 255, 64]
+    #     brown_multiplier = [40. / 255, 26. / 255, 13. / 255]
+
+    color_mask[label_im == 1] = blue_multiplier  # [1, 0, 0]  # Red block
+    color_mask[label_im == 2] = yellow_multiplier  # [0, 1, 0] # Green block
+    color_mask[label_im == 3] = green_multiplier  # [0, 0, 1] # Blue block
+    color_mask[label_im == 4] = green_multiplier  # [0, 1, 1] # Blue block
+
+    return color_mask
