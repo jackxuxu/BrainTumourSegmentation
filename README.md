@@ -1,3 +1,3 @@
 # BrainTumourSegmentation
 
-BRATS2015 with Attention U-net
+BRATS2020 with Attention U-net
