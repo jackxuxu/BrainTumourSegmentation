@@ -3,7 +3,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import os
 import glob
-import medpy.io
+# import medpy.io
 from sklearn.metrics import confusion_matrix
 
 def min_max_norm(images):
