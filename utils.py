@@ -277,7 +277,7 @@ def compute_metric(y_true, y_pred, label_type='binary'):
     which is dice coefficient, sensitivity, specificity
     :param y_true: Ground truth image
     :param y_pred: Prediction image from the model
-    :label_type: 'binary': input labels is binarized
+    :param label_type: 'binary': input labels is binarized
              'multi': mutli class labels
     :return: dice coefficient, sensitivity & specificity list
             with order ['core', 'enhancing', 'complete']
