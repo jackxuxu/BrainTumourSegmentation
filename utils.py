@@ -1,10 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import os
-import glob
-# import medpy.io
 from sklearn.metrics import confusion_matrix
+
 
 def min_max_norm(images):
     """
@@ -35,6 +32,7 @@ def channel_standardization(image):
     cast = np.nan_to_num(output)
 
     return cast
+
 
 def concat_recursive(a, b, max_count, count=0):
     '''
@@ -113,8 +111,9 @@ def min_max_norm(slice):
     "Min max norm channel wise"
     max_channel = np.max(slice)
     min_channel = np.min(slice)
-    norm = (slice-min_channel)/(max_channel - min_channel)
+    norm = (slice - min_channel) / (max_channel - min_channel)
     return norm
+
 
 def std_norm(slice):
     """
@@ -124,24 +123,26 @@ def std_norm(slice):
     b = np.percentile(slice, 99)
     t = np.percentile(slice, 1)
     slice = np.clip(slice, t, b)
-    if np.std(slice)==0:
+    if np.std(slice) == 0:
         return slice
     else:
         slice = (slice - np.mean(slice)) / np.std(slice)
         return slice
 
-def normalize_modalities(Slice, mode = None):
+
+def normalize_modalities(Slice, mode=None):
     """
     Performs normalization on each modalities of input
     """
-    assert mode!=None, "Please in put [mode] type! 'std' for standard normalization, 'minmax' for minmax normalization"
+    assert mode != None, "Please in put [mode] type! 'std' for standard normalization, 'minmax' for minmax normalization"
     normalized_slices = np.zeros_like(Slice).astype(np.float32)
     for slice_ix in range(4):
-        if mode=='std':
+        if mode == 'std':
             normalized_slices[..., slice_ix] = std_norm(Slice[..., slice_ix])
-        if mode=='minmax':
+        if mode == 'minmax':
             normalized_slices[..., slice_ix] = min_max_norm(Slice[..., slice_ix])
     return normalized_slices
+
 
 def dicesq(y_true, y_pred, smooth=1e-5):
     '''
@@ -150,9 +151,10 @@ def dicesq(y_true, y_pred, smooth=1e-5):
     :param y_pred: Prediction from the model
     :return: Modified dice coefficient
     '''
-    nmr = 2*tf.reduce_sum(y_true*y_pred)
-    dnmr = tf.reduce_sum(y_true**2) + tf.reduce_sum(y_pred**2) + smooth
+    nmr = 2 * tf.reduce_sum(y_true * y_pred)
+    dnmr = tf.reduce_sum(y_true ** 2) + tf.reduce_sum(y_pred ** 2) + smooth
     return (nmr / dnmr)
+
 
 def dicesq_loss(y_true, y_pred):
     '''
@@ -160,7 +162,8 @@ def dicesq_loss(y_true, y_pred):
     :param y_true: Ground truth
     :param y_pred: Prediction from the model
     '''
-    return 1- dicesq(y_true, y_pred)
+    return 1 - dicesq(y_true, y_pred)
+
 
 def dice_coef(y_true, y_pred, smooth=1e-5):
     '''
@@ -169,11 +172,11 @@ def dice_coef(y_true, y_pred, smooth=1e-5):
     :param y_pred: Prediction from the model
     :return: dice coefficient
     '''
-    #if input is not flatten
-    if (tf.rank(y_true)!=1 and tf.rank(y_pred)!=1):
-        y_true = tf.reshape(y_true, [-1]) #flatten
-        y_pred = tf.reshape(y_pred, [-1]) #flatten
-    #casting for label from int32 to float32 for computation
+    # if input is not flatten
+    if (tf.rank(y_true) != 1 and tf.rank(y_pred) != 1):
+        y_true = tf.reshape(y_true, [-1])  # flatten
+        y_pred = tf.reshape(y_pred, [-1])  # flatten
+    # casting for label from int32 to float32 for computation
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
     intersection = tf.reduce_sum(y_true * y_pred)
@@ -181,14 +184,15 @@ def dice_coef(y_true, y_pred, smooth=1e-5):
     #     return 0.0
     # else:
     dc = (2.0 * intersection + smooth) / \
-        (tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) + smooth)
+         (tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) + smooth)
     return dc.numpy()
+
 
 def dice_coef_loss(y_true, y_pred):
     '''
     Dice coefficient loss for IOU
     '''
-    return 1-dice_coef(y_true, y_pred)
+    return 1 - dice_coef(y_true, y_pred)
 
 
 def dice_coef_bool(y_true, y_pred):
@@ -344,3 +348,62 @@ def compute_metric(y_true, y_pred, label_type='binary'):
             spec_output.append(spec_batch_mean)
     # for each list the order is as following=> 'core','enhancing','complete'
     return dc_output, sens_output, spec_output
+
+
+def compute_metric_dc(y_true, y_pred):
+    """
+    This function compute the dice coefficient metrics specify by BraTS competition
+    :param y_true: Ground truth image
+    :param y_pred: Prediction image from the model
+    :return: dice coefficient with order ['core', 'enhancing', 'complete']
+    """
+    # one hot input images
+    y_true = tf.keras.utils.to_categorical(y_true, num_classes=4)  # [240,240,4]
+    y_pred = tf.keras.utils.to_categorical(y_pred, num_classes=4)  # [240,240,4
+    y_list = [y_true, y_pred]
+    tumours = ['core', 'enhancing', 'complete']
+    dc_output = []
+    # compute dice coefficient for each tumour type
+    for tumour_type in tumours:
+        # label 1,3(4)
+        if tumour_type == 'core':
+            channel = [1, 3]
+        # label 3(4)
+        if tumour_type == 'enhancing':
+            channel = [3]
+        # label 1,2,3,
+        if tumour_type == 'complete':
+            channel = [1, 2, 3]
+        # list to store DC of different images in the batch
+        dc_list = []
+        # list to store DC of different channel
+        dc_inner = []
+        # only single images [240, 240, 4]
+        if y_true.ndim == 2:
+            for c in channel:
+                dc = dice_coef_bool(y_true[..., c], y_pred[..., c])
+                dc_inner.append(dc)
+            # append for each tumour type
+            dc_output.append(np.mean(dc_inner))
+        # batched images [?,240,240]
+        else:
+            for idx in range(len(y_true)):  # batch size
+                # computing DC for each channel
+                for c in channel:
+                    y_true_f = tf.reshape(y_true[idx, ..., c], [-1])  # flatten
+                    y_pred_f = tf.reshape(y_pred[idx, ..., c], [-1])  # flatten
+
+                    dc = dice_coef_bool(y_true_f, y_pred_f)
+                    dc_inner.append(np.mean(dc))
+                # store values for along the batch axis
+                dc_list.append(dc_inner)
+
+            # output [BATCH_SIZE, tumours_type]
+            # taking the mean along the batch axis
+            mean_ = lambda x: np.mean(x)
+            dc_batch_mean = mean_(dc_list)
+            # append for each tumour type
+            dc_output.append(dc_batch_mean)
+
+    # for each list the order is as following=> 'core','enhancing','complete'
+    return dc_output
