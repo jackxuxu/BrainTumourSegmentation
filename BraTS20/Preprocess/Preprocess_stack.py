@@ -2,16 +2,13 @@ import sys
 sys.path.append('/home/kevinteng/Desktop/BrainTumourSegmentation')
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-import glob
-import pandas as pd
-import medpy.io
-from utils_vis import plot_comparison
-import utils
+
 
 
 def threeD_to_twoD02(save_dir, input_path, n):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     patients = sorted(os.listdir(input_path))
     n_patients = len(patients)
     stacks = n_patients // n
@@ -40,8 +37,8 @@ def threeD_to_twoD02(save_dir, input_path, n):
         np.save(save_dir + 'stack_{}.npy'.format(j), np.array(np_stack00))
 
 
-input_path = "/home/kevinteng/Desktop/ssd02/BraTS2020_preprocessed03/Training_pre/"
-save_dir = "/home/kevinteng/Desktop/ssd02/BraTS2020_stack03/"
+input_path = "/home/kevinteng/Desktop/ssd02/BraTS2020_preprocessed05/Training_pre/"
+save_dir = "/home/kevinteng/Desktop/ssd02/BraTS2020_stack05/"
 
 if __name__ == "__main__":
     threeD_to_twoD02(save_dir, input_path, n=30)

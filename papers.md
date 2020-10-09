@@ -36,6 +36,7 @@ Neural Network for Medical Image Classification: https://arxiv.org/pdf/2007.1589
 Liver Segmentation from CT Volumes: https://arxiv.org/pdf/1607.00582.pdf
 * Image Segmentation Using Deep Learning:
 A Survey: https://arxiv.org/pdf/2001.05566.pdf
+* Variant of Residual Module in ResNet: https://arxiv.org/pdf/1603.05027.pdf
 
 # Loss Functions
 * Metrics to Evaluate your Semantic Segmentation Model: https://towardsdatascience.com/metrics-to-evaluate-your-semantic-segmentation-model-6bcb99639aa2
