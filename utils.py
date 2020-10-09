@@ -2,21 +2,6 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 
-
-def min_max_norm(images):
-    """
-    Min max normalization of images
-    Parameters:
-        images: Input stacked image list
-    Return:
-        Image list after min max normalization
-    """
-    m = np.max(images)
-    mi = np.min(images)
-    images = (images - mi) / (m - mi)
-    return images
-
-
 def channel_standardization(image):
     '''
     Stanadrdization of image channel wise => Standard score
@@ -107,14 +92,6 @@ def parse_tfrecord(tf_dir):
     return parsed_dataset
 
 
-def min_max_norm(slice):
-    "Min max norm channel wise"
-    max_channel = np.max(slice)
-    min_channel = np.min(slice)
-    norm = (slice - min_channel) / (max_channel - min_channel)
-    return norm
-
-
 def std_norm(slice):
     """
     Removes 1% of the top and bottom intensities and perform
@@ -129,6 +106,21 @@ def std_norm(slice):
         slice = (slice - np.mean(slice)) / np.std(slice)
         return slice
 
+def min_max_norm(images):
+    """
+    Min max normalization of images
+    Parameters:
+        images: Input stacked image list
+    Return:
+        Image list after min max normalization
+    """
+    m = np.max(images)
+    mi = np.min(images)
+    if m==mi:
+        images = np.zeros_like(images)
+    else:
+        images = (images - mi) / (m - mi)
+    return images
 
 def normalize_modalities(Slice, mode=None):
     """
