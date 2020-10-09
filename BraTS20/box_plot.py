@@ -32,8 +32,8 @@ def wildcard_list(query_list, query, mode=None):
     """
     assert mode=="index" or mode=="string", "Please input mode as 'index' or 'string'!"
     bool_list = [fnmatch.fnmatch(x, query) for x in query_list]
-    idx_list = [i for i in range(len(bool_list)) if bool_list[i] == True]
-    if mode=="index":
+    idx_list = [i for i in range(len(bool_list)) if bool_list[i] is True]
+    if mode == "index":
         return idx_list
     else:
         str_list = [header[j] for j in idx_list]
@@ -46,8 +46,8 @@ train_dc = []
 val_dc = []
 # loop throught the DC cases and slice & convert to list
 for dc in dc_col:
-    train_dc.append(list(map(np.float32,train_csv.iloc[1:n_row, dc].tolist()))) #map from string->int
-    val_dc.append(list(map(np.float32,validation_csv.iloc[1:n_row, dc].tolist()))) #map from string->int
+    train_dc.append(list(map(np.float32,train_csv.iloc[1:n_row, dc].tolist()))) # map from string->int
+    val_dc.append(list(map(np.float32,validation_csv.iloc[1:n_row, dc].tolist()))) # map from string->int
 
 #%%
 
