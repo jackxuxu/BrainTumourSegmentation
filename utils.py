@@ -351,7 +351,7 @@ def compute_metric_dc(y_true, y_pred):
     """
     # one hot input images
     y_true = tf.keras.utils.to_categorical(y_true, num_classes=4)  # [240,240,4]
-    y_pred = tf.keras.utils.to_categorical(y_pred, num_classes=4)  # [240,240,4
+    y_pred = tf.keras.utils.to_categorical(y_pred, num_classes=4)  # [240,240,4]
     y_list = [y_true, y_pred]
     tumours = ['core', 'enhancing', 'complete']
     dc_output = []
