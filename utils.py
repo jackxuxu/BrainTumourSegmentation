@@ -399,3 +399,29 @@ def compute_metric_dc(y_true, y_pred):
 
     # for each list the order is as following=> 'core','enhancing','complete'
     return dc_output
+
+def data_aug(imgs):
+    '''
+    This function returns augmented images with 4 choices:
+    choice 0 -> no augmentation applied
+    choice 1 -> flip up and down
+    choice 2 -> flip left and right
+    choice 3 -> rotate n_rot*90 where n_rot is random integer
+    @param imgs: image with size [b,w,h,c]
+    @return: augmented images
+    '''
+    choice = np.random.randint(0,4)
+    # no augmentation
+    if choice==0:
+        x = imgs
+    # flip up and down
+    if choice==1:
+        x = tf.image.flip_up_down(imgs)
+    # flip left and right
+    if choice==2:
+        x = tf.image.flip_left_right(imgs)
+    # rotation based on angle
+    if choice==3:
+        n_rot = np.random.randint(1,4)
+        x = tf.image.rot90(imgs, k=n_rot)
+    return x
