@@ -20,7 +20,7 @@ def attention_block(input_signal, gated_signal, filters, att_layer_name):
     alpha = UpSampling2D(interpolation='bilinear')(bottle_neck)
     # filter off input signal's features with attention coefficient
     multi = Multiply()([input_signal, alpha])
-    return multi
+    return multi, alpha
 
 
 def PAM(inp_feature, layer_name, kernel_initializer='glorot_uniform', acti='relu'):
@@ -52,12 +52,13 @@ def PAM(inp_feature, layer_name, kernel_initializer='glorot_uniform', acti='relu
     key = tf.einsum('bij->bji', key) # transpose/permutation
     # matmul pipeline 01 & 02
     matmul_0102 = tf.einsum('bij,bjk->bik', query, key) # [(wxh),(wxh)]
-    softmax0102 = Softmax(name=layer_name[2])(matmul_0102)
+    #attention coefficient
+    alpha_p = Softmax(name=layer_name[2])(matmul_0102) # [(wxh),(wxh)]
     # Branch03
     value = conv_2d(inp_feature, filters=c, layer_name=layer_name[3], batch_norm=False, kernel_size=(1, 1), acti=acti,
         kernel_initializer=kernel_initializer, dropout_rate=None)
     value = tf.reshape(value,[-1,(w*h),c]) # [(wxh),c]
-    matmul_all = tf.einsum('bij,bjk->bik',softmax0102,value) # [(wxh),c]
+    matmul_all = tf.einsum('bij,bjk->bik',alpha_p,value) # [(wxh),c]
     # Output
     output = tf.reshape(matmul_all, [-1,w,h,c]) # [w,h,c]
     # learnable coefficient to control the importance of CAM
@@ -74,7 +75,7 @@ def CAM(inp_feature, layer_name):
     :param inp_feature: feature maps of res block after up sampling [w,h,c]k
     :param layer_name: List of layer names
         [softmax output, channel attention coefficients, Add output]
-    :return: CAM features [w/2,h/2,c]
+    :return: CAM features [w/4,h/4,c]
     '''
     # downsampling by scale of 4 for GPU memory issue
     inp_feature = Conv2D(filters=128,kernel_size=1, strides=2, padding='same',activation='relu')(inp_feature)
@@ -90,18 +91,19 @@ def CAM(inp_feature, layer_name):
     key = tf.einsum('ijk->ikj', key) # Permute:[c,(wxh)]
     # matmul pipeline 01 & 02
     matmul_0201 = tf.einsum('ijk,ikl->ijl', key, query) # [c,c]
-    softmax0102 = Softmax(name=layer_name[0])(matmul_0201)
+    #attention coefficient
+    alpha_c = Softmax(name=layer_name[0])(matmul_0201) # [c,c]
     # Branch03 Dimension: [w,h,c] => [c,(wxh)]
     value = tf.reshape(inp_feature,[-1,(w*h),c]) # [(wxh),c]
-    matmul_all = tf.einsum('ijk,ikl->ijl', value,softmax0102) # [(wxh),c]
+    matmul_all = tf.einsum('ijk,ikl->ijl', value, alpha_c) # [(wxh),c]
     # output
     output = tf.reshape(matmul_all,[-1,w,h,c])# [w,h,c]
     # provides learnable parameter
     # *channel wise attention, inspired by Squeeze Excitation(SE) block
     GAP = GlobalAveragePooling2D()(output)
     dense01 = Dense(c//8, activation='relu')(GAP)
-    alpha_c = Dense(c,activation='sigmoid', name=layer_name[1])(dense01)
+    lambda_c = Dense(c,activation='sigmoid', name=layer_name[1])(dense01)
     # outputs
-    output = Multiply()([output, alpha_c])
+    output = Multiply()([output, lambda_c])
     output_add = Add(name=layer_name[-1])([output, inp_feature])
     return output_add
