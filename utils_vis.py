@@ -8,6 +8,22 @@ from skimage import io, color, img_as_float
 from skimage.exposure import adjust_gamma
 import utils
 
+def plot_loss(loss_list, xlabel, ylabel, title):
+    '''
+    :param loss_list: List containing total loss values
+    :param recon_list: List containing reconstruction loss
+    :param xlabel: string for xlabel
+    :param ylabel: string for ylabel
+    :param title: string for title
+    :return: loss value plot
+    '''
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.grid(linestyle='dotted')
+    plt.plot(loss_list)
+
+
 def plot_comparison(input_img, caption, save_path=None, save_name=None, save_as='png',
                     save_dpi=300, captions_font = 20, n_row=1, n_col=2,
                     figsize=(5, 5), cmap='gray'):
