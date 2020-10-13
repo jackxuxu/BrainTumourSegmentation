@@ -107,3 +107,51 @@ def CAM(inp_feature, layer_name):
     output = Multiply()([output, lambda_c])
     output_add = Add(name=layer_name[-1])([output, inp_feature])
     return output_add
+
+
+def guided_attention_block(inp_feature, layer_name_p, layer_name_c):
+    '''
+    Guided attention block that takes feature as input and concatenates features
+    from PAM and CAM as output
+    :param inp_feature: Input features
+    :param layer_name_p: layer name list for PAM
+    :param layer_name_c: layer name list for CAM
+    :return: squeezed concatenated features of PAM and CAM
+    '''
+    pam_feature = PAM(inp_feature, layer_name_p, kernel_initializer=hn)
+    cam_feature = CAM(inp_feature, layer_name_c)
+    add = Add()([pam_feature,cam_feature]) #[60,60,128]
+    up = UpSampling2D(size=(4,4))(add) #[240,240,128]
+    squeeze = Conv2D(filters=64, kernel_size=1, padding='same', kernel_initializer=hn,
+                       activation='relu')(up)
+    #pam and cam features
+    feature_pc = [pam_feature, cam_feature]
+    return squeeze, feature_pc
+
+
+def guided_attention(res_feature, ms_feature, layer_name):
+    '''
+    Guided attention module
+    :param res_feature: Upsampled Feature maps from Res Block
+    :param ms_feature: Multi scale feature maps result from Res Block
+    :param layer_name: Layer Name should consist be a list contating 4 list
+    Example:
+    layer_name_p01 = ['pam01_conv01', 'pam01_conv02', 'pam01_softmax', 'pam01_conv03',
+                      'pam01_alpha','pam01_add']
+    layer_name_c01 = ['cam01_softmax', 'cam01_alpha','cam01_add']
+    layer_name_p02 = ['pam02_conv01', 'pam02_conv02', 'pam02_softmax', 'pam02_conv03',
+                      'pam02_alpha', 'pam02_add']
+    layer_name_c02 = ['cam02_softmax', 'cam02_alpha','cam02_add']
+    layer_name = [layer_name_p01, layer_name_c01, layer_name_p02, layer_name_c02]
+
+    :return: guided attention module with shape same as input
+    '''
+    assert len(layer_name)==4, "Layer name should be a list consisting 4 lists!"
+    #self attention block01
+    concat01 = concatenate([res_feature, ms_feature], axis=-1)
+    squeeze01, feature_pc01 = guided_attention_block(concat01, layer_name[0], layer_name[1])
+    multi01 = Multiply()([squeeze01, ms_feature])
+    #self attention block02
+#     concat02 = concatenate([multi01, res_feature],axis=-1)
+#     squeeze02 = guided_attention_block(concat02, layer_name[2], layer_name[3])
+    return multi01, feature_pc01
