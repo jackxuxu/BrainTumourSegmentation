@@ -24,13 +24,16 @@ def generalized_dice_loss(y_true, y_pred):
     return 1 - generalized_dice(y_true, y_pred)
 
 
-def custom_loss(y_true, y_pred):
+def custom_loss(y_true, y_pred, lambda_=1.25):
     """
     The final loss function consists of the summation of two losses "GDL" and "CE"
     with a regularization term.
     """
     xent = tf.keras.losses.CategoricalCrossentropy()
-    return generalized_dice_loss(y_true, y_pred) + 1.25 * xent(y_true, y_pred)
+    l_xent = lambda_ * xent(y_true, y_pred)
+    l_dc = generalized_dice_loss(y_true, y_pred)
+    l_total = l_dc + l_xent
+    return l_total, l_xent, l_dc
 
 
 #focal loss, reference: https://github.com/artemmavrin/focal-loss/blob/master/src/focal_loss/_categorical_focal_loss.py
