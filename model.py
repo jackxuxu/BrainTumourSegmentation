@@ -22,6 +22,170 @@ for b in range(1,4):
         layer_block.append(layer_internal)
     layer_name_ga.append(layer_block)
 
+hn = 'he_normal' #kernel initializer
+
+def Unet_model(input_layer, dropout=0.2):
+    # downsampling
+    #     conv1 = coordconv_block(input_layer, x_dim=240, y_dim=240, filters=64)
+    conv1 = conv_block(input_layer, filters=64, kernel_initializer=hn)
+    pool1 = pool(conv1)
+
+    conv2 = conv_block(pool1, filters=128, kernel_initializer=hn)
+    pool2 = pool(conv2)
+
+    conv3 = conv_block(pool2, filters=256, kernel_initializer=hn)
+    pool3 = pool(conv3)
+
+    conv4 = conv_block(pool3, filters=512, kernel_initializer=hn, dropout_rate=dropout)
+    pool4 = pool(conv4)
+
+    conv5 = conv_block(pool4, filters=1024, kernel_initializer=hn, dropout_rate=dropout)
+
+    # upsampling
+    up1 = up(conv5, filters=512, merge=conv4, kernel_initializer=hn)
+    #     conv6 = coordconv_block(up1, x_dim=30, y_dim=30, filters=512)
+    conv6 = conv_block(up1, filters=512, kernel_initializer=hn)
+
+    up2 = up(conv6, filters=256, merge=conv3, kernel_initializer=hn)
+    conv7 = conv_block(up2, filters=256, kernel_initializer=hn)
+
+    up3 = up(conv7, filters=128, merge=conv2, kernel_initializer=hn)
+    conv8 = conv_block(up3, filters=128, kernel_initializer=hn)
+
+    up4 = up(conv8, filters=64, merge=conv1, kernel_initializer=hn)
+    conv9 = conv_block(up4, filters=64, kernel_initializer=hn)
+
+    output_layer = Conv2D(4, (1, 1), activation='softmax')(conv9)
+
+    return output_layer
+
+
+def AttUnet_model(input_layer, attention_mode='grid', dropout=0.2):
+    '''
+    Attention Unet without deep supervision
+    @param input_layer: input batched image [b,w,h,c]
+    @param attention_mode: choice of attention mode, default 'grid'
+            where the gated signal derived from upsampling path,
+            else, the gated signal is from the downsampling path
+    @param dropout: specify dropout
+    @return: segmentated output, attention coefficient list for each skip connections
+    '''
+    # downsampling path
+    conv1 = conv_block(input_layer, filters=64, kernel_initializer=hn)
+    pool1 = pool(conv1)
+
+    conv2 = conv_block(pool1, filters=128, kernel_initializer=hn)
+    pool2 = pool(conv2)
+
+    conv3 = conv_block(pool2, filters=256, kernel_initializer=hn)
+    pool3 = pool(conv3)
+
+    conv4 = conv_block(pool3, filters=512, kernel_initializer=hn, dropout_rate=dropout)
+    pool4 = pool(conv4)
+
+    conv5 = conv_block(pool4, filters=1024, kernel_initializer=hn, dropout_rate=dropout)
+
+    # upsampling path
+    att01, grid_att01 = attention_block(conv4, conv5, 512, 'grid_att01')
+    up1 = up(conv5, filters=512, merge=att01, kernel_initializer=hn)
+    conv6 = conv_block(up1, filters=512, kernel_initializer=hn)
+
+    if attention_mode == 'grid':
+        att02, grid_att02 = attention_block(conv3, conv6, 256, 'grid_att02')
+    else:
+        att02, grid_att02 = attention_block(conv3, conv4, 256, 'grid_att02')
+    up2 = up(conv6, filters=256, merge=att02, kernel_initializer=hn)
+    conv7 = conv_block(up2, filters=256, kernel_initializer=hn)
+
+    if attention_mode == 'grid':
+        att03, grid_att03 = attention_block(conv2, conv7, 128, 'grid_att03')
+    else:
+        att03, grid_att03 = attention_block(conv2, conv3, 128, 'grid_att03')
+    up3 = up(conv7, filters=128, merge=att03, kernel_initializer=hn)
+    conv8 = conv_block(up3, filters=128, kernel_initializer=hn)
+
+    if attention_mode == 'grid':
+        att04, grid_att04 = attention_block(conv1, conv8, 64, 'grid_att04')
+    else:
+        att04, grid_att04 = attention_block(conv1, conv2, 64, 'grid_att04')
+    up4 = up(conv8, filters=64, merge=att04, kernel_initializer=hn)
+    conv9 = conv_block(up4, filters=64, kernel_initializer=hn)
+
+    output_layer = Conv2D(4, (1, 1), activation='softmax')(conv9)
+    #attention coefficient
+    att_co = [grid_att01, grid_att02, grid_att03, grid_att04]
+    return output_layer, att_co
+
+
+def DeepAttUnet_model(input_layer, attention_mode='grid'):
+    '''
+    Attention Unet with deep supervision
+    @param input_layer: input batched image [b,w,h,c]
+    @param attention_mode: choice of attention mode, default 'grid'
+            where the gated signal derived from upsampling path,
+            else, the gated signal is from the downsampling path
+    @param dropout: specify dropout
+    @return: segmentated output, attention coefficient list for each skip connections
+    '''
+    gauss1 = GaussianNoise(0.01)(input_layer)
+    # downsampling path
+    conv1 = conv_block(gauss1, filters=64, kernel_initializer=hn)
+    pool1 = pool(conv1)
+
+    conv2 = conv_block(pool1, filters=128, kernel_initializer=hn)
+    pool2 = pool(conv2)
+
+    conv3 = conv_block(pool2, filters=256, kernel_initializer=hn)
+    pool3 = pool(conv3)
+
+    conv4 = conv_block(pool3, filters=512, kernel_initializer=hn, dropout_rate=0.3)
+    pool4 = pool(conv4)
+
+    conv5 = conv_block(pool4, filters=1024, kernel_initializer=hn, dropout_rate=0.3)
+
+    # upsampling path
+    att01, grid_att01 = attention_block(conv4, conv5, 512, 'grid_att01')
+    up1 = up(conv5, filters=512, merge=att01, kernel_initializer=hn)
+    conv6 = conv_block(up1, filters=512, kernel_initializer=hn)
+
+    if attention_mode == 'grid':
+        att02, grid_att02 = attention_block(conv3, conv6, 256, 'grid_att02')
+    else:
+        att02, grid_att02 = attention_block(conv3, conv4, 256, 'grid_att02')
+    up2 = up(conv6, filters=256, merge=att02, kernel_initializer=hn)
+    conv7 = conv_block(up2, filters=256, kernel_initializer=hn)
+    # injection block 1
+    seg01 = Conv2D(4, (1, 1), padding='same')(conv7)
+    up_seg01 = UpSampling2D()(seg01)
+
+    if attention_mode == 'grid':
+        att03, grid_att03 = attention_block(conv2, conv7, 128, 'grid_att03')
+    else:
+        att03, grid_att03 = attention_block(conv2, conv3, 128, 'grid_att03')
+    up3 = up(conv7, filters=128, merge=att03, kernel_initializer=hn)
+    conv8 = conv_block(up3, filters=128, kernel_initializer=hn)
+    # injection block 2
+    seg02 = Conv2D(4, (1, 1), padding='same')(conv8)
+    add_21 = Add()([seg02, up_seg01])
+    up_seg02 = UpSampling2D()(add_21)
+
+    if attention_mode == 'grid':
+        att04, grid_att04 = attention_block(conv1, conv8, 64, 'grid_att04')
+    else:
+        att04, grid_att04 = attention_block(conv1, conv2, 64, 'grid_att04')
+    up4 = up(conv8, filters=64, merge=att04, kernel_initializer=hn)
+    conv9 = conv_block(up4, filters=64, kernel_initializer=hn)
+    # injection block 3
+    seg03 = Conv2D(4, (1, 1), padding='same')(conv9)
+    add_32 = Add()([seg03, up_seg02])
+
+    #segmentated output
+    output_layer = Conv2D(4, (1, 1), activation='softmax')(add_32)
+    #attention coefficient
+    att_co = [grid_att01, grid_att02, grid_att03, grid_att04]
+
+    return output_layer, att_co
+
 
 def selfGuidedAtt_v02(x):
     '''

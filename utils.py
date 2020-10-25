@@ -32,6 +32,7 @@ def concat_recursive(a, b, max_count, count=0):
         count += 1
         concat_recursive(a, b, max_count, count)
     return a
+# ------------------------------------------------------functions for tf_records----------------------------
 
 
 def _bytes_feature(value):
@@ -90,6 +91,7 @@ def parse_tfrecord(tf_dir):
     tfrecord_dataset = tf.data.TFRecordDataset(tf_dir)
     parsed_dataset = tfrecord_dataset.map(read_tfrecord)
     return parsed_dataset
+# --------------------------------------------------------------------------------------------------------
 
 
 def std_norm(slice):
@@ -106,6 +108,7 @@ def std_norm(slice):
         slice = (slice - np.mean(slice)) / np.std(slice)
         return slice
 
+
 def min_max_norm(images):
     """
     Min max normalization of images
@@ -121,6 +124,7 @@ def min_max_norm(images):
     else:
         images = (images - mi) / (m - mi)
     return images
+
 
 def normalize_modalities(Slice, mode=None):
     """
