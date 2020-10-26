@@ -55,6 +55,11 @@ def box_plot_plotter(data_a, data_b, figsize=(10,10),
                      title='title', xlabel='xlabel', ylabel='ylabel',
                      ticks_font = 10, label_font=15,
                      save=False, save_path=None, save_name=None, format='png', dpi=300):
+    '''
+    Box Plot for dual input
+    @param data_a: Training Data
+    @param data_b: Validation Data
+    '''
     ticks = ['ET', 'WT', 'TC']
 
     def set_box_color(bp, color):

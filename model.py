@@ -265,3 +265,77 @@ def selfGuidedAtt_v02(x):
     f_pc = [f_pc01, f_pc02, f_pc03]
     return output_xent, output_dice, gated_attention, f_pc
 
+def selfGuidedAtt_v01(x):
+    '''
+    Resnet as backbone for multiscale feature retrieval.
+    Each resblock output(input signal), next resblock output(gated signal) is
+    feed into the gated attention for multi scale feature refinement.
+    Each gated attention output is pass through a bottle neck layer to standardize
+    the channel size by squashing them to desired filter size of 64.
+    The features are upsampled at each block to the corresponding [wxh] dimension
+    of w:240, h:240.
+    The upsampled features are concat and squash to corresponding channel size of 64
+    which yield multiscale feature.
+    :param x: batched images
+    :return: feature maps of each res block
+    '''
+    #inject noise
+    gauss1 = GaussianNoise(0.01)(x)
+    #---- ResNet and Multiscale Features----
+    #1st block
+    conv01 = CoordConv(x_dim=240, y_dim=240, with_r=False, filters=64, strides=(1,1),
+                      kernel_size = 3, padding='same', kernel_initializer=hn, name='conv01')(gauss1)
+    res_block01 = res_block_sep(conv01, filters=[128, 64], layer_name=["conv02", "conv03", "add01"])
+    #2nd block
+    down_01 = down_sampling_sep(res_block01, filters=128, layer_name = 'down_01',  kernel_initializer=hn,
+                               mode='normal',x_dim=120, y_dim=120)
+    res_block02 = res_block_sep(down_01, filters=[256, 128], layer_name=["conv04", "conv05", "add02"])
+    #3rd block
+    down_02 = down_sampling_sep(res_block02, filters=256, layer_name = 'down_02',  kernel_initializer=hn,
+                               mode='normal',x_dim=60, y_dim=60)
+    res_block03 = res_block_sep(down_02, filters=[512, 256], layer_name=["conv06", "conv07", "add03"])
+    #4th block
+    down_03 = down_sampling_sep(res_block03, filters=512, layer_name = 'down_03',  kernel_initializer=hn,
+                               mode='normal',x_dim=30, y_dim=30)
+    res_block04 = res_block_sep(down_03, filters=[1024, 512], layer_name=["conv08", "conv09", "add04"])
+    #grid attention blocks
+    att_block01, g_att01 = attention_block(res_block01,res_block02,64,'grid_att01')
+    att_block02, g_att02 = attention_block(res_block02,res_block03,128,'grid_att02')
+    att_block03, g_att03 = attention_block(res_block03, res_block04,256,'gird_att03')
+    #bottle neck => layer squash all attention block to same filter size 64
+    bottle01 = Conv2D(filters=64, kernel_size=1, padding='same', kernel_initializer=hn)(att_block01)
+    bottle02 = Conv2D(filters=64, kernel_size=1, padding='same', kernel_initializer=hn)(att_block02)
+    bottle03 = Conv2D(filters=64, kernel_size=1, padding='same', kernel_initializer=hn)(att_block03)
+    #upsampling for all layers to same (wxh) dimension=>240x240
+    up01 = bottle01 #[240,240,64]
+    up02 = UpSampling2D(size=(2, 2), interpolation='bilinear')(bottle02) #[120,120,64]=>[240,240,64]
+    up03 = UpSampling2D(size=(4,4), interpolation='bilinear')(bottle03) #[60,60,64]=>[240,240,64]
+    #multiscale features
+    concat_all = concatenate([up01,up02,up03],axis=-1) #[240,240,3*64]
+    #squeeze to have the same channel as upsampled features [240,240,3*64] => [240,240,64]
+    ms_feature = Conv2D(filters=64, kernel_size=1, padding='same', kernel_initializer=hn)(concat_all)
+    #Segmentations from multiscale features *without softmax activation
+    seg_01 = Conv2D(4, (1,1), name='seg_01')(up01)
+    seg_02 = Conv2D(4, (1,1), name='seg_02')(up02)
+    seg_03 = Conv2D(4, (1,1), name='seg_03')(up02)
+
+    #----self guided attention blocks-----
+    ga_01, f_pc01 = guided_attention(up01, ms_feature, layer_name_ga[0])
+    ga_02, f_pc02 = guided_attention(up02, ms_feature, layer_name_ga[1])
+    ga_03, f_pc03 = guided_attention(up03, ms_feature, layer_name_ga[2])
+    #Segmentations from guided attention features *without softmax activation
+    seg_ga01 = Conv2D(4, (1,1), name='seg_ga01')(ga_01)
+    seg_ga02 = Conv2D(4, (1,1), name='seg_ga02')(ga_02)
+    seg_ga03 = Conv2D(4, (1,1), name='seg_ga03')(ga_03)
+    #outputs for xent losses
+    output_xent = [seg_01, seg_02, seg_03, seg_ga01, seg_ga02, seg_ga03]
+    #output for dice coefficient loss
+    pred_seg = Add()(output_xent)
+    output_dice = Softmax()(pred_seg/len(output_xent))
+    #output for feature visualization
+    #gated attention
+    gated_attention = [g_att01, g_att02, g_att03]
+    #pam and cam features
+    f_pc = [f_pc01, f_pc02, f_pc03]
+    return output_xent, output_dice, gated_attention, f_pc
+

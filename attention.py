@@ -2,7 +2,7 @@ import tensorflow as tf
 from utils_model import *
 from tensorflow.keras.layers import Conv2D, UpSampling2D, Activation, Add, Multiply
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Softmax
-
+from tensorflow.keras.layers import Conv3D, UpSampling3D, concatenate
 
 def attention_block(input_signal, gated_signal, filters, att_layer_name):
     # input signal feature maps
@@ -155,3 +155,24 @@ def guided_attention(res_feature, ms_feature, layer_name):
 #     concat02 = concatenate([multi01, res_feature],axis=-1)
 #     squeeze02 = guided_attention_block(concat02, layer_name[2], layer_name[3])
     return multi01, feature_pc01
+
+def attention_block_3D(input_signal, gated_signal, filters, kernel_initializer=hn):
+    # input signal feature maps
+    is_fm = Conv3D(filters, kernel_size=1, strides=2, padding = 'same',
+                   kernel_initializer=kernel_initializer)(input_signal)
+    # gated signal feature maps
+    gs_fm = Conv3D(filters, kernel_size=1, strides=1, padding = 'same',
+                   kernel_initializer=kernel_initializer)(gated_signal)
+    # debugger
+    assert is_fm.shape!=gs_fm.shape, "Feature maps shape doesn't match!"
+    # element wise sum
+    add = Add()([is_fm, gs_fm])
+    acti = Activation('relu')(add)
+    # downsampled attention coefficient
+    bottle_neck = Conv3D(1, kernel_size=1, activation='sigmoid',
+                         kernel_initializer=kernel_initializer)(acti)
+    # bilinear interpolation to get attention coeffcient
+    alpha = UpSampling3D(size=2)(bottle_neck)
+    # filter off input signal's features with attention coefficient
+    multi = Multiply()([input_signal, alpha])
+    return multi
